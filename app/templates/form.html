@@ -1,0 +1,38 @@
+{% extends "base.html"%}
+{% block title %}Main{% endblock %}
+{% block head %}
+    {{ super() }}    
+{% endblock %}
+{% block content %}
+<form action="/submitvalue" method="post">
+    
+      
+      <div class="field">
+        <label class="label">Subject</label>
+        <div class="control">
+          <div class="select">
+            <select name="CropType">
+              <option>Select dropdown</option>
+              <option value="SweetPotato">Sweet Potato</option>
+              <option value="PigeonPea">Pigeon Pea</option>
+        
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="field">
+        <label class="label">Message</label>
+        <div class="control">
+          <textarea class="textarea" placeholder="Textarea"></textarea>
+        </div>
+      </div>
+      
+      
+        <div class="control">
+          <button type="submit" class="button is-primary">Submit</button>
+        </div>
+        
+  
+</form>
+{% endblock %}
