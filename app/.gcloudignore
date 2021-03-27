@@ -12,8 +12,13 @@
 # below:
 .git
 .gitignore
-
+/dev
+/config
+/instance
 # Python pycache:
 __pycache__/
 # Ignored by the build system
 /setup.cfg
+/env
+/fbaseconnection/__pycache__
+/private
