@@ -1,3 +1,4 @@
 app/env
 /dev
 /app/__pycache__
+*.csv
