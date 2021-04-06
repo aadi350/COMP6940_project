@@ -21,4 +21,3 @@ __pycache__/
 /setup.cfg
 /env
 /fbaseconnection/__pycache__
-/private
