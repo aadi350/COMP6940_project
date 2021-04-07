@@ -17,11 +17,13 @@ class OrganiseData:
     def __init__(self,):
         pass
 
-    def filter_weather(self, weather_data):
+    def filter_weather(self, weather_data, recent_month=None):
         weather_filtered = dict()
         weather_keys = ['humidity_mean', 'humidity_var', 'pressure_mean', 'pressure_var', 'rain_mean', 'rain_var', 'temp', 'temp_max', 'temp_min']
-        for weather_key in weather_keys:    
+        for weather_key in weather_keys:  
             month_current = int(date.today().strftime('%m'))
+            if recent_month:  
+                month_current = recent_month
             year_current = int(date.today().strftime('%Y'))
             temp_key_data = weather_data[0][weather_key]
             # To Store retrieved data
@@ -41,13 +43,27 @@ class OrganiseData:
         return weather_data
 
 
+class GenerateSeries: 
+    def __init__(self):
+        pass
+    # TODO Figure out how far ahead the prediction should run, and if we can do this using predicted weather data from the pi
+    def gen_prediction(self, current_month=6 ):
+        organisedata = OrganiseData()
+        weather_data = organisedata.get_weather()
+        for month in range(current_month, current_month - 3, -1):
+            weather_filtered, weather_keys = organisedata.filter_weather(weather_data, recent_month=current_month)
+
+            runprediction = RunPrediction()
+            pred = runprediction.predict_feasibility(weather_filtered)
+            print(pred)
+
 
 class RunPrediction:
     def __init__(self):
         self.model_params = None 
 
     def predict_feasibility(self, weather_data):        
-        print(self.predict_crop_feasibility(weather_data, pymc3_params))
+        return self.predict_crop_feasibility(weather_data, pymc3_params)
 
     def select_model(self, model_params):
         self.model_params = model_params
@@ -110,3 +126,6 @@ weather_filtered, weather_keys = organisedata.filter_weather(weather_data)
 
 runprediction = RunPrediction()
 runprediction.predict_feasibility(weather_filtered)
+
+genseries = GenerateSeries()
+genseries.gen_prediction()
