@@ -1,21 +1,19 @@
-#!/usr/bin/env python3
-
 import requests
 import json
 import numpy as np
-import pandas as pd
 import sys
 from ast import literal_eval
 from datetime import datetime
 
 import firebase_admin
 from firebase_admin import credentials
-from firebase_admin import credentials, firestore, initialize_app, db
+from firebase_admin import credentials, initialize_app, db
 from firebase_admin import db
 
 PORT_OF_SPAIN = '3573890'
 APP_ID = '88cc48691dfee3e4171782d8419517f7'
 weather_url = f'https://api.openweathermap.org/data/2.5/forecast?id={PORT_OF_SPAIN}&appid={APP_ID}'
+
 '''
     data[list] ->   iterate
         dt
@@ -113,10 +111,7 @@ def get_data():
     transformed_data = transform_data(avg_data)
     return transformed_data
 
-cred = credentials.Certificate('crop-jedi-storage-firebase-adminsdk-scef3-882ee18ae0.json')
-app = firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://crop-jedi-storage-default-rtdb.firebaseio.com/'
-})
+
 
 
 def post_data(temp_data):
@@ -153,8 +148,10 @@ def post_data(temp_data):
 
 
 if __name__ == '__main__':
+    cred = credentials.Certificate('crop-jedi-storage-firebase-adminsdk-scef3-882ee18ae0.json')
+    app = firebase_admin.initialize_app(cred, { 'databaseURL': 'https://crop-jedi-storage-default-rtdb.firebaseio.com/'})
 
     db_ref = db.reference('weather_data/rain_mean/(4, 2021)')
-
+    print(db_ref.get(db_ref))
     # temp_data = get_data()
     # post_data(temp_data)
