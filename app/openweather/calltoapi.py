@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import requests
 import json
 import numpy as np
@@ -75,21 +77,27 @@ def foo(data):
     return data
 
 def transform_data(avg_data):
+    '''
+        Function takes raw data from API and computes mean of all weather parameters,
+        multiple transformations are then done in order to scale the params 
+        as determined during model building
+    '''
     transformed = dict()
     TRANFORMS = [np.log, np.exp, foo]
     TRANFORMS_NAMES = ['log', 'exp', 'None']
+
     for t,n in zip(TRANFORMS, TRANFORMS_NAMES):
         pressure = t(avg_data['pressure'])
         if pressure==np.Inf:
             pressure = sys.float_info.max
 
         transformed_dict = dict({
-            'rain': t(avg_data['rain']),
-            'temp': t(avg_data['temp']),
+            'rain_mean': t(avg_data['rain']),
+            'temp_mean': t(avg_data['temp']),
             'temp_min': t(avg_data['temp_min']),
             'temp_max': t(avg_data['temp_max']),
-            'pressure': pressure,
-            'humidity': t(avg_data['humidity'])
+            'pressure_mean': pressure,
+            'humidity_mean': t(avg_data['humidity'])
         })
         
         transformed[n] = transformed_dict
@@ -110,44 +118,43 @@ app = firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://crop-jedi-storage-default-rtdb.firebaseio.com/'
 })
 
-temp_data = get_data()
 
 def post_data(temp_data):
-    temp_ref = db.reference('weather_data')
-    data = {
-        datetime.today().strftime('%Y%m%d'): 
-                {
-                    'log': {
-                        'rain': temp_data['log']['rain'],
-                        'temp': temp_data['log']['temp'],
-                        'temp_min': temp_data['log']['temp_min'],
-                        'temp_max': temp_data['log']['temp_max'],
-                        'pressure': temp_data['log']['pressure'],
-                        'humidity': temp_data['log']['humidity']
-                    },
-                    'exp': {
-                        'rain': temp_data['exp']['rain'],
-                        'temp': temp_data['exp']['temp'],
-                        'temp_min': temp_data['exp']['temp_min'],
-                        'temp_max': temp_data['exp']['temp_max'],
-                        'pressure': temp_data['exp']['pressure'],
-                        'humidity': temp_data['exp']['humidity']
-                    },
-                    'none': {
-                        'rain': temp_data['None']['rain'],
-                        'temp': temp_data['None']['temp'],
-                        'temp_min': temp_data['None']['temp_min'],
-                        'temp_max': temp_data['None']['temp_max'],
-                        'pressure': temp_data['None']['pressure'],
-                        'humidity': temp_data['None']['humidity']
-                    }
-                }
-            
-            }
+    '''
+        Function first gets the database reference from Firebase corresponding
+        to today's month and year, the weather parameters are posted to the database by
+        means of the set functions for each given parameter. This script is meant to be run daily 
+        in order to keep the weather parameters updated.
 
-    temp_ref.set(data)
+        # TODO: Possible update is to first pull the current mean value and use a 
+        running average to update the values on Firebase
+    '''
+    temp_ref = db.reference('weather_data')
+    cur_year = int(datetime.today().strftime('%Y'))
+    cur_month = int(datetime.today().strftime('%m'))
+
+    rain_mean_ref = db.reference(f'/weather_data/rain_mean/({cur_month}, {cur_year})')
+    rain_mean_ref.set(temp_data['exp']['rain_mean'])
+
+    temp_max_ref = db.reference(f'/weather_data/temp_max/({cur_month}, {cur_year})')
+    temp_max_ref.set(temp_data['exp']['temp_max'])
+
+    pressure_mean_ref = db.reference(f'/weather_data/pressure_mean/({cur_month}, {cur_year})')
+    pressure_mean_ref.set(temp_data['exp']['pressure_mean'])
+
+    temp_min_ref = db.reference(f'/weather_data/temp_min/({cur_month}, {cur_year})')
+    temp_min_ref.set(temp_data['exp']['temp_min'])
+
+
+    temp_min_ref = db.reference(f'/weather_data/temp_min_raw/({cur_month}, {cur_year})')
+    temp_min_ref.set(temp_data['None']['temp_min'])
+
+    return None
 
 
 if __name__ == '__main__':
-    temp_data = get_data()
-    post_data(temp_data)
+
+    db_ref = db.reference('weather_data/rain_mean/(4, 2021)')
+
+    # temp_data = get_data()
+    # post_data(temp_data)
