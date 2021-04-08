@@ -152,6 +152,6 @@ if __name__ == '__main__':
     app = firebase_admin.initialize_app(cred, { 'databaseURL': 'https://crop-jedi-storage-default-rtdb.firebaseio.com/'})
 
     db_ref = db.reference('weather_data/rain_mean/(4, 2021)')
-    print(db_ref.get(db_ref))
-    # temp_data = get_data()
-    # post_data(temp_data)
+
+    temp_data = get_data()
+    post_data(temp_data)
