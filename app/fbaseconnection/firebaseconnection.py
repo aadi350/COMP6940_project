@@ -1,3 +1,7 @@
+'''
+   File contains imports for firebase realtime database, loads secure credentials and initialises a 
+   firebase app for which database connections can be added afterwards 
+'''
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import credentials, firestore, initialize_app, db
