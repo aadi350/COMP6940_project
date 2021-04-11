@@ -16,10 +16,20 @@ app = firebase_admin.initialize_app(cred, {
 })
 
 class OrganiseData:
+    '''
+        Class meant to make call to firebase for stored data and return in usable formats for 
+        regression calculation. filter_weather() is the only function intended to be used stand-alone
+    '''
     def __init__(self,):
         pass
 
     def filter_weather(self, weather_data, recent_month=None):
+        '''
+            Calls backend database and filters based on current date and year
+            Returns a tuple of filtered weather dictionary and a list of the keys to index the dictionary
+                Dictionary is indexed by weather parameter (see weather keys) and dictionary contains lists of past values for each key 
+
+        '''
         weather_filtered = dict()
         weather_keys = ['humidity_mean', 'humidity_var', 'pressure_mean', 'pressure_var', 'rain_mean', 'rain_var', 'temp', 'temp_max', 'temp_min']
         for weather_key in weather_keys:  
@@ -40,17 +50,26 @@ class OrganiseData:
         return weather_filtered, weather_keys
 
     def get_weather(self):
+        '''
+            Used to get raw weather data from firebase
+        '''
         weather_ref = db.reference('weather_data')
         weather_data = weather_ref.get(weather_ref)
         return weather_data
 
     def get_soil(self):
+        '''
+            Used to get raw weather data from firebase
+        '''
         soil_ref = db.reference('soil_data')
         soil_data = soil_ref.get(soil_ref)
         return soil_data
 
 
 class GenerateSeries: 
+    '''
+        #TODO Tentative delete
+    '''
     def __init__(self):
         pass
     # TODO Figure out how far ahead the prediction should run, and if we can do this using predicted weather data from the pi
@@ -66,6 +85,10 @@ class GenerateSeries:
 
 
 class RunSoilPrediction:
+    '''
+        Class pulls raw soil data from database and generates mean values for nitrogen, phosporous and potassium,
+        mean values are then compared to optimal using l2 losses, and the crop with the minimum error is returned
+    '''
     def __init__(self,):
         pass
     def predict_feasibility(self):
@@ -84,13 +107,19 @@ class RunSoilPrediction:
 
 
     def calc_crop_error(self, params, n_mean, p_mean, k_mean):
+        '''
+            Utility function for calculating loss
+        '''
         n_error = params['N']['mean'] - n_mean
         k_error = params['K']['mean'] - k_mean
         p_error = params['P']['mean'] - k_mean
         return (n_error**2 + k_error**2 + p_error**2)**(1/2)
 
 
-    def gen_soil_series(self, soil_data) -> pd.DataFrame:
+    def gen_soil_series(self, soil_data):  
+        '''
+            Creates dataframe from soil data and returns cleaned data
+        '''  
         df = pd.DataFrame(colums=['date', 'N', 'P', 'K'])
         for data in soil_data.items():
             df = df.append({'date': data[0], 'N': data[1]['N'], 'P': data[1]['P'], 'K': data[1]['K']})
@@ -100,6 +129,9 @@ class RunSoilPrediction:
         return df
 
     def get_mean_window(self,df):
+        '''
+            Calculates mean values for N, P, K for the past months of the current year and returns dictionary of values
+        '''
         cur_month, cur_year = int(date.today().strftime('%m')), int(date.today().strftime('%Y'))
         df_year = df[df['date'] >= cur_year]
         n = df_year['N'].mean()
@@ -110,23 +142,41 @@ class RunSoilPrediction:
 
     # TODO    
     def remove_trend(self, df):
+        '''
+            Utility function to remove trend from data
+        '''
         return df
   
     def remove_seasonality(self, df):
+        '''
+            Utility function to remove trend from data
+        '''
         return df
 
 
 class RunPrediction:
+    '''
+        Class meant to determine the most optimal crop to be planted
+    '''
     def __init__(self):
         self.model_params = None 
 
-    def predict_feasibility(self, weather_data):        
+    def predict_feasibility(self, weather_data):       
+        '''
+            Main function to get most optimal crop
+        ''' 
         return self.predict_crop_feasibility(weather_data, pymc3_params)
 
     def select_model(self, model_params):
+        '''
+            Sets model parameters for prediction
+        '''
         self.model_params = model_params
 
     def predict_crop_feasibility(self, weather_data, model_params):
+        '''
+            Base function for calculating feasibility for ALL crops and returning scores
+        '''
         if self.model_params is None:
             logging.warning("pymc3_params selected as default")
             self.model_params = pymc3_params
@@ -147,6 +197,9 @@ class RunPrediction:
 
 
     def _predict_crop_feasibility(self, crop, model_params):
+        '''
+            Base function for predicting feasibility of single crop given crop and model parameters
+        '''
         crop_data, crop_keys = crop[0], crop[1]
         res = 0.0
 
@@ -157,6 +210,9 @@ class RunPrediction:
         return res
 
     def _choose_crop(self, weather_data, crop):
+        '''
+            Utility function to return data per crop
+        '''
         data = dict()
         potato_keys = ['pressure_mean', 'temp_max']
         citrus_keys = ['rain_mean', 'pressure_mean', 'rain_var']
