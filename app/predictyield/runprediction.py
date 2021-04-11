@@ -1,9 +1,11 @@
 import logging
+import pandas as pd
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import credentials, firestore, initialize_app, db
 from flask import Flask, request, jsonify
 import numpy as np
+from soilparams import soil_params
 from modelparams import pymc3_params, lr_params, ridge_params
 
 from datetime import date
@@ -42,6 +44,11 @@ class OrganiseData:
         weather_data = weather_ref.get(weather_ref)
         return weather_data
 
+    def get_soil(self):
+        soil_ref = db.reference('soil_data')
+        soil_data = soil_ref.get(soil_ref)
+        return soil_data
+
 
 class GenerateSeries: 
     def __init__(self):
@@ -56,6 +63,57 @@ class GenerateSeries:
             runprediction = RunPrediction()
             pred = runprediction.predict_feasibility(weather_filtered)
             print(pred)
+
+
+class RunSoilPrediction:
+    def __init__(self,):
+        pass
+    def predict_feasibility(self):
+        organise_data = OrganiseData()
+        soil_data = OrganiseData.get_soil()
+        soil_series = self.gen_soil_series(soil_data)
+        n_mean, p_mean, k_mean = self.get_mean_window(soil_series)
+
+        errors = dict()
+
+        errors['potato_error'] = self.calc_crop_error(soil_params['potato'], n_mean, p_mean, k_mean)
+        errors['peas_error '] = self.calc_crop_error(soil_params['peas'], n_mean, p_mean, k_mean)
+        errors['citrus_error'] = self.calc_crop_error(soil_params['citrus'], n_mean, p_mean, k_mean)
+
+        return min(errors.items(), key=lambda x: x[1])
+
+
+    def calc_crop_error(self, params, n_mean, p_mean, k_mean):
+        n_error = params['N']['mean'] - n_mean
+        k_error = params['K']['mean'] - k_mean
+        p_error = params['P']['mean'] - k_mean
+        return (n_error**2 + k_error**2 + p_error**2)**(1/2)
+
+
+    def gen_soil_series(self, soil_data) -> pd.DataFrame:
+        df = pd.DataFrame(colums=['date', 'N', 'P', 'K'])
+        for data in soil_data.items():
+            df = df.append({'date': data[0], 'N': data[1]['N'], 'P': data[1]['P'], 'K': data[1]['K']})
+
+        df = self.remove_trend(df)
+        df = self.remove_seasonality(df)        
+        return df
+
+    def get_mean_window(self,df):
+        cur_month, cur_year = int(date.today().strftime('%m')), int(date.today().strftime('%Y'))
+        df_year = df[df['date'] >= cur_year]
+        n = df_year['N'].mean()
+        p = df_year['P'].mean()
+        k = df_year['K'].mean()
+
+        return dict({'N': n, 'P': p, 'K':k})
+
+    # TODO    
+    def remove_trend(self, df):
+        return df
+  
+    def remove_seasonality(self, df):
+        return df
 
 
 class RunPrediction:

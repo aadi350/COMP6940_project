@@ -1,3 +1,8 @@
+'''
+    Linear regression parameters for all models 
+    file not executable, dictionaries meant to be imported and used for
+    future calculations
+'''
 pymc3_params = dict({
     'POTATO': {
         'pressure_mean': -0.01, 
