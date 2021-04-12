@@ -7,10 +7,11 @@ from flask import Flask, request, jsonify
 import numpy as np
 from soilparams import soil_params
 from modelparams import pymc3_params, lr_params, ridge_params
+import pickle
 
 from datetime import date
 
-cred = credentials.Certificate('../private/HIDDEN.json')
+cred = credentials.Certificate('../private/crop-jedi-storage-firebase-adminsdk-scef3-882ee18ae0.json')
 app = firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://crop-jedi-storage-default-rtdb.firebaseio.com/'
 })
@@ -22,6 +23,10 @@ class OrganiseData:
     '''
     def __init__(self,):
         pass
+
+    def scale_weather(self, weather_data, recent_month=None):
+        weather_data = self.filter_weather(weather_data, recent_month=recent_month)
+        return weather_data
 
     def filter_weather(self, weather_data, recent_month=None):
         '''
@@ -140,6 +145,8 @@ class RunSoilPrediction:
 
         return dict({'N': n, 'P': p, 'K':k})
 
+
+
     # TODO    
     def remove_trend(self, df):
         '''
@@ -196,6 +203,12 @@ class RunPrediction:
         return potato, citrus, peas
 
 
+
+
+    def forecast_prediction(self, weather_filtered, weather_keys):
+ 
+        return weather_filtered
+
     def _predict_crop_feasibility(self, crop, model_params):
         '''
             Base function for predicting feasibility of single crop given crop and model parameters
@@ -213,6 +226,7 @@ class RunPrediction:
         '''
             Utility function to return data per crop
         '''
+
         data = dict()
         potato_keys = ['pressure_mean', 'temp_max']
         citrus_keys = ['rain_mean', 'pressure_mean', 'rain_var']
@@ -238,8 +252,9 @@ organisedata = OrganiseData()
 weather_data = organisedata.get_weather()
 weather_filtered, weather_keys = organisedata.filter_weather(weather_data)
 
+
 runprediction = RunPrediction()
 runprediction.predict_feasibility(weather_filtered)
-
-genseries = GenerateSeries()
-genseries.gen_prediction()
+print(runprediction.forecast_prediction(weather_filtered, weather_keys))
+# genseries = GenerateSeries()
+# genseries.gen_prediction()

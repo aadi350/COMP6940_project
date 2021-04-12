@@ -4,11 +4,12 @@ import numpy as np
 import sys
 from ast import literal_eval
 from datetime import datetime
-
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import credentials, initialize_app, db
 from firebase_admin import db
+import pickle
+
 
 PORT_OF_SPAIN = '3573890'
 APP_ID = '88cc48691dfee3e4171782d8419517f7'
@@ -55,7 +56,7 @@ def clean_from_api(data):
         'humidity': 0
     })
 
-
+    scalers = load_scalers()
     for day in data:    
         if 'rain' in day.keys():
             avg_data['rain'] = avg_data['rain'] + day['rain']['3h']    
@@ -68,6 +69,8 @@ def clean_from_api(data):
 
     for k,v in avg_data.items():
         avg_data[k] = avg_data[k]/int(data_len)
+
+    
 
     return avg_data
 
@@ -86,9 +89,9 @@ def transform_data(avg_data):
 
     for t,n in zip(TRANFORMS, TRANFORMS_NAMES):
         pressure = t(avg_data['pressure'])
+
         if pressure==np.Inf:
             pressure = sys.float_info.max
-
         transformed_dict = dict({
             'rain_mean': t(avg_data['rain']),
             'temp_mean': t(avg_data['temp']),
@@ -98,6 +101,8 @@ def transform_data(avg_data):
             'humidity_mean': t(avg_data['humidity'])
         })
         
+
+
         transformed[n] = transformed_dict
 
     return transformed
@@ -106,13 +111,39 @@ def transform_data(avg_data):
 def get_data():
     response = requests.get(weather_url).content
     data = literal_eval(response.decode('utf-8'))
+    scalers = load_scalers()
 
     avg_data = clean_from_api(data)
+
+    print(avg_data)
+    print('\n\n\n')
+    
+    avg_data['rain'] = scalers['rain_mean'].inverse_transform(np.array(avg_data['rain']).reshape(-1,1))[0][0]
+    avg_data['temp'] = scalers['temp'].inverse_transform(np.array(avg_data['temp']).reshape(-1,1))[0][0]
+    avg_data['temp_min'] = scalers['temp_min'].inverse_transform(np.array(avg_data['temp_min']).reshape(-1,1))[0][0]
+    avg_data['temp_max'] = scalers['temp_max'].inverse_transform(np.array(avg_data['temp_max']).reshape(-1,1))[0][0]
+    avg_data['pressure'] = scalers['pressure_mean'].inverse_transform(np.array(avg_data['pressure']).reshape(-1,1))[0][0]
+    avg_data['humidity'] = scalers['humidity_mean'].inverse_transform(np.array(avg_data['humidity']).reshape(-1,1))[0][0]
+
+    print(avg_data)
     transformed_data = transform_data(avg_data)
     return transformed_data
 
 
 
+
+def load_scalers():
+    scalers = dict()
+    scalers['humidity_mean'] = pickle.load(open('scalers/humidity_mean_scaler.pkl', 'rb'))
+    scalers['humidity_var'] = pickle.load(open('scalers/humidity_var_scaler.pkl', 'rb'))
+    scalers['pressure_mean'] = pickle.load(open('scalers/pressure_mean_scaler.pkl', 'rb'))
+    scalers['pressure_var'] = pickle.load(open('scalers/pressure_var_scaler.pkl', 'rb'))
+    scalers['rain_mean'] = pickle.load(open('scalers/rain_mean_scaler.pkl', 'rb'))
+    scalers['rain_var'] = pickle.load(open('scalers/rain_var_scaler.pkl', 'rb'))
+    scalers['temp'] = pickle.load(open('scalers/temp_scaler.pkl', 'rb'))
+    scalers['temp_max'] = pickle.load(open('scalers/temp_max_scaler.pkl', 'rb'))
+    scalers['temp_min'] = pickle.load(open('scalers/temp_min_scaler.pkl', 'rb'))
+    return scalers
 
 def post_data(temp_data):
     '''
@@ -154,4 +185,4 @@ if __name__ == '__main__':
     db_ref = db.reference('weather_data/rain_mean/(4, 2021)')
 
     temp_data = get_data()
-    post_data(temp_data)
+    # post_data(temp_data)
