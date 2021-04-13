@@ -114,18 +114,6 @@ def get_data():
     scalers = load_scalers()
 
     avg_data = clean_from_api(data)
-
-    print(avg_data)
-    print('\n\n\n')
-    
-    avg_data['rain'] = scalers['rain_mean'].inverse_transform(np.array(avg_data['rain']).reshape(-1,1))[0][0]
-    avg_data['temp'] = scalers['temp'].inverse_transform(np.array(avg_data['temp']).reshape(-1,1))[0][0]
-    avg_data['temp_min'] = scalers['temp_min'].inverse_transform(np.array(avg_data['temp_min']).reshape(-1,1))[0][0]
-    avg_data['temp_max'] = scalers['temp_max'].inverse_transform(np.array(avg_data['temp_max']).reshape(-1,1))[0][0]
-    avg_data['pressure'] = scalers['pressure_mean'].inverse_transform(np.array(avg_data['pressure']).reshape(-1,1))[0][0]
-    avg_data['humidity'] = scalers['humidity_mean'].inverse_transform(np.array(avg_data['humidity']).reshape(-1,1))[0][0]
-
-    print(avg_data)
     transformed_data = transform_data(avg_data)
     return transformed_data
 
@@ -160,16 +148,16 @@ def post_data(temp_data):
     cur_month = int(datetime.today().strftime('%m'))
 
     rain_mean_ref = db.reference(f'/weather_data/rain_mean/({cur_month}, {cur_year})')
-    rain_mean_ref.set(temp_data['exp']['rain_mean'])
+    rain_mean_ref.set(temp_data['None']['rain_mean'])
 
     temp_max_ref = db.reference(f'/weather_data/temp_max/({cur_month}, {cur_year})')
-    temp_max_ref.set(temp_data['exp']['temp_max'])
+    temp_max_ref.set(temp_data['None']['temp_max'])
 
     pressure_mean_ref = db.reference(f'/weather_data/pressure_mean/({cur_month}, {cur_year})')
-    pressure_mean_ref.set(temp_data['exp']['pressure_mean'])
+    pressure_mean_ref.set(temp_data['None']['pressure_mean'])
 
     temp_min_ref = db.reference(f'/weather_data/temp_min/({cur_month}, {cur_year})')
-    temp_min_ref.set(temp_data['exp']['temp_min'])
+    temp_min_ref.set(temp_data['None']['temp_min'])
 
 
     temp_min_ref = db.reference(f'/weather_data/temp_min_raw/({cur_month}, {cur_year})')
@@ -181,8 +169,5 @@ def post_data(temp_data):
 if __name__ == '__main__':
     cred = credentials.Certificate('crop-jedi-storage-firebase-adminsdk-scef3-882ee18ae0.json')
     app = firebase_admin.initialize_app(cred, { 'databaseURL': 'https://crop-jedi-storage-default-rtdb.firebaseio.com/'})
-
-    db_ref = db.reference('weather_data/rain_mean/(4, 2021)')
-
     temp_data = get_data()
-    # post_data(temp_data)
+    post_data(temp_data)
