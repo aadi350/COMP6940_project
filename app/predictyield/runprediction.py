@@ -5,6 +5,7 @@ from firebase_admin import credentials
 from firebase_admin import credentials, firestore, initialize_app, db
 from flask import Flask, request, jsonify
 import numpy as np
+from numpy import *
 from soilparams import soil_params
 from modelparams import pymc3_params, lr_params, ridge_params
 import pickle
@@ -32,7 +33,7 @@ class OrganiseData:
         '''
             Calls backend database and filters based on current date and year
             Returns a tuple of filtered weather dictionary and a list of the keys to index the dictionary
-                Dictionary is indexed by weather parameter (see weather keys) and dictionary contains lists of past values for each key 
+            Dictionary is indexed by weather parameter (see weather keys) and dictionary contains lists of past values for each key 
 
         '''
         weather_filtered = dict()
@@ -69,24 +70,6 @@ class OrganiseData:
         soil_ref = db.reference('soil_data')
         soil_data = soil_ref.get(soil_ref)
         return soil_data
-
-
-class GenerateSeries: 
-    '''
-        #TODO Tentative delete
-    '''
-    def __init__(self):
-        pass
-    # TODO Figure out how far ahead the prediction should run, and if we can do this using predicted weather data from the pi
-    def gen_prediction(self, current_month=6 ):
-        organisedata = OrganiseData()
-        weather_data = organisedata.get_weather()
-        for month in range(current_month, current_month - 3, -1):
-            weather_filtered, weather_keys = organisedata.filter_weather(weather_data, recent_month=current_month)
-
-            runprediction = RunPrediction()
-            pred = runprediction.predict_feasibility(weather_filtered)
-            print(pred)
 
 
 class RunSoilPrediction:
@@ -168,11 +151,6 @@ class RunPrediction:
     def __init__(self):
         self.model_params = None 
 
-    def predict_feasibility(self, weather_data):       
-        '''
-            Main function to get most optimal crop
-        ''' 
-        return self.predict_crop_feasibility(weather_data, pymc3_params)
 
     def select_model(self, model_params):
         '''
@@ -187,6 +165,7 @@ class RunPrediction:
         if self.model_params is None:
             logging.warning("pymc3_params selected as default")
             self.model_params = pymc3_params
+
         potato_data = self._choose_crop(weather_data, crop='POTATO')
         citrus_data = self._choose_crop(weather_data, crop='CITRUS')
         peas_data = self._choose_crop(weather_data, crop='PEAS')
@@ -202,12 +181,52 @@ class RunPrediction:
 
         return potato, citrus, peas
 
-
-
+    def scale_weather_data(self, weather_filtered):
+        '''
+            Function takes weather data formatted into a dictionary of values,
+            removes trend/seasonality using stationary differencing and scales using pre-baked
+            scalers from training, this can then be used to generate crop optimality readings
+        '''
+        scalers = self.load_scalers()
+        for weather in weather_filtered.items():
+            # weather is a tuple, for example: ('humidity_mean', [array containing values for humidity_mean])
+            label = weather[0]
+            data = weather[1]
+            for i in range(1, len(data) - 1):
+                data[i+1] = data[i+1] - data[i]
+            weather_filtered[label] = scalers[label].transform(np.array(data).reshape(-1,1))
+            
+        return weather_filtered
 
     def forecast_prediction(self, weather_filtered, weather_keys):
- 
-        return weather_filtered
+        '''
+            # TODO: Take scaled data and calculate optimal values for each crop using three different models, returning 
+            optimal crops for the past 6 months, generate 3-month and 6-month optimal forecast using this data for each of the 
+            regression models (bayesian, linear, etc)
+        '''
+        scaled_data = self.scale_weather_data(weather_filtered)
+        index = [i for i in range(len(scaled_data[weather_keys[0]]))]
+        shortest_val = np.Inf
+        for i in scaled_data.items():
+            shortest_val = min(i[1].shape[0], shortest_val)
+        scaled_df = pd.DataFrame(
+            {
+                weather_keys[0]: np.transpose(scaled_data[weather_keys[0]])[0][-shortest_val:],
+                weather_keys[1]: np.transpose(scaled_data[weather_keys[1]])[0][-shortest_val:],
+                weather_keys[2]: np.transpose(scaled_data[weather_keys[2]])[0][-shortest_val:],
+                weather_keys[3]: np.transpose(scaled_data[weather_keys[3]])[0][-shortest_val:],
+                weather_keys[4]: np.transpose(scaled_data[weather_keys[4]])[0][-shortest_val:],
+                weather_keys[5]: np.transpose(scaled_data[weather_keys[5]])[0][-shortest_val:],
+                weather_keys[6]: np.transpose(scaled_data[weather_keys[6]])[0][-shortest_val:],
+                weather_keys[7]: np.transpose(scaled_data[weather_keys[7]])[0][-shortest_val:],
+                weather_keys[8]: np.transpose(scaled_data[weather_keys[8]])[0][-shortest_val:],
+                'peas': [-1]*shortest_val, 
+                'citrus': [-1]*shortest_val, 
+                'potato': [-1]*shortest_val, 
+            },
+            index = index
+        )
+        return scaled_df
 
     def _predict_crop_feasibility(self, crop, model_params):
         '''
@@ -221,6 +240,19 @@ class RunPrediction:
 
         res+= model_params['intercept']
         return res
+
+    def load_scalers(self):
+        scalers = dict()
+        scalers['humidity_mean'] = pickle.load(open('scalers/humidity_mean_scaler.pkl', 'rb'))
+        scalers['humidity_var'] = pickle.load(open('scalers/humidity_var_scaler.pkl', 'rb'))
+        scalers['pressure_mean'] = pickle.load(open('scalers/pressure_mean_scaler.pkl', 'rb'))
+        scalers['pressure_var'] = pickle.load(open('scalers/pressure_var_scaler.pkl', 'rb'))
+        scalers['rain_mean'] = pickle.load(open('scalers/rain_mean_scaler.pkl', 'rb'))
+        scalers['rain_var'] = pickle.load(open('scalers/rain_var_scaler.pkl', 'rb'))
+        scalers['temp'] = pickle.load(open('scalers/temp_scaler.pkl', 'rb'))
+        scalers['temp_max'] = pickle.load(open('scalers/temp_max_scaler.pkl', 'rb'))
+        scalers['temp_min'] = pickle.load(open('scalers/temp_min_scaler.pkl', 'rb'))
+        return scalers
 
     def _choose_crop(self, weather_data, crop):
         '''
@@ -252,9 +284,8 @@ organisedata = OrganiseData()
 weather_data = organisedata.get_weather()
 weather_filtered, weather_keys = organisedata.filter_weather(weather_data)
 
-
 runprediction = RunPrediction()
-runprediction.predict_feasibility(weather_filtered)
 print(runprediction.forecast_prediction(weather_filtered, weather_keys))
+
 # genseries = GenerateSeries()
 # genseries.gen_prediction()
