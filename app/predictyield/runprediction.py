@@ -226,6 +226,12 @@ class RunPrediction:
             },
             index = index
         )
+
+        # Take output of predict_crop_feasibility and insert into each row depending on weather valueus
+        # Do for each model, only change is parrams beingg paasseend
+        # single-function call to do exponential forecasting on peas, citrus and potato columns for 3 and 6 months
+
+
         return scaled_df
 
     def _predict_crop_feasibility(self, crop, model_params):

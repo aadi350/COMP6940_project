@@ -118,21 +118,6 @@ def get_data():
     return transformed_data
 
 
-
-
-def load_scalers():
-    scalers = dict()
-    scalers['humidity_mean'] = pickle.load(open('scalers/humidity_mean_scaler.pkl', 'rb'))
-    scalers['humidity_var'] = pickle.load(open('scalers/humidity_var_scaler.pkl', 'rb'))
-    scalers['pressure_mean'] = pickle.load(open('scalers/pressure_mean_scaler.pkl', 'rb'))
-    scalers['pressure_var'] = pickle.load(open('scalers/pressure_var_scaler.pkl', 'rb'))
-    scalers['rain_mean'] = pickle.load(open('scalers/rain_mean_scaler.pkl', 'rb'))
-    scalers['rain_var'] = pickle.load(open('scalers/rain_var_scaler.pkl', 'rb'))
-    scalers['temp'] = pickle.load(open('scalers/temp_scaler.pkl', 'rb'))
-    scalers['temp_max'] = pickle.load(open('scalers/temp_max_scaler.pkl', 'rb'))
-    scalers['temp_min'] = pickle.load(open('scalers/temp_min_scaler.pkl', 'rb'))
-    return scalers
-
 def post_data(temp_data):
     '''
         Function first gets the database reference from Firebase corresponding
