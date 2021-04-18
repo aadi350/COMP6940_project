@@ -9,7 +9,10 @@ from numpy import *
 from soilparams import soil_params
 from modelparams import pymc3_params, lr_params, ridge_params
 import pickle
-
+#################################################################
+from statsmodels.tsa.holtwinters import SimpleExpSmoothing
+from sklearn.metrics import mean_squared_error   
+#################################################################
 from datetime import date
 
 cred = credentials.Certificate('../private/crop-jedi-storage-firebase-adminsdk-scef3-882ee18ae0.json')
@@ -226,6 +229,73 @@ class RunPrediction:
             },
             index = index
         )
+##############################################################################################
+        scaled_df['potato_pymc3'] = scaled_df.apply(
+            lambda x: self.predict_crop_feasibility(x, pymc3_params)[0], axis=1)
+        scaled_df['citrus_pymc3'] = scaled_df.apply(
+            lambda x: self.predict_crop_feasibility(x, pymc3_params)[1], axis=1)
+        scaled_df['peas_pymc3'] = scaled_df.apply(
+            lambda x: self.predict_crop_feasibility(x, pymc3_params)[2], axis=1)
+        scaled_df['crop_pymc3'] = scaled_df[['potato_pymc3', 'citrus_pymc3',
+                                             'peas_pymc3']].idxmax(axis=1).replace('_pymc3', '')
+
+        scaled_df['potato_lr'] = scaled_df.apply(
+            lambda x: self.predict_crop_feasibility(x, lr_params)[0], axis=1)
+        scaled_df['citrus_lr'] = scaled_df.apply(
+            lambda x: self.predict_crop_feasibility(x, lr_params)[1], axis=1)
+        scaled_df['peas_lr'] = scaled_df.apply(
+            lambda x: self.predict_crop_feasibility(x, lr_params)[2], axis=1)
+        scaled_df['crop_lr'] = scaled_df[['potato_lr', 'citrus_lr', 'peas_lr']].idxmax(
+            axis=1).replace('_lr', '')
+
+        scaled_df['potato_ridge'] = scaled_df.apply(
+            lambda x: self.predict_crop_feasibility(x, ridge_params)[0], axis=1)
+        scaled_df['citrus_ridge'] = scaled_df.apply(
+            lambda x: self.predict_crop_feasibility(x, ridge_params)[1], axis=1)
+        scaled_df['peas_ridge'] = scaled_df.apply(
+            lambda x: self.predict_crop_feasibility(x, ridge_params)[2], axis=1)
+        scaled_df['crop_ridge'] = scaled_df[['potato_ridge', 'citrus_ridge',
+                                             'peas_ridge']].idxmax(axis=1).replace('_ridge', '')
+        
+        
+        
+        
+        exp_potato = SimpleExpSmoothing(np.asarray(scaled_df['potato'])).fit(smoothing_level=0.1,optimized=False)
+        exp_citrus = SimpleExpSmoothing(np.asarray(scaled_df['citrus'])).fit(smoothing_level=0.1,optimized=False)
+        exp_peas = SimpleExpSmoothing(np.asarray(scaled_df['peas'])).fit(smoothing_level=0.1,optimized=False)
+        
+        #month_current = int(date.today().strftime('%m'))
+
+        potato_month3 = exp_potato.predict(month_current, month_current + 3)
+        rms1 = sqrt(mean_squared_error(scaled_df['potato'], potato_month3))
+        #print(rms1)
+        citrus_month3 = exp_citrus.predict(month_current, month_current + 3)
+        rms2 = sqrt(mean_squared_error(scaled_df['citrus'], citrus_month3))
+        #print(rms2)
+        peas_month3 = exp_peas.predict(month_current, month_current + 3)
+        rms3 = sqrt(mean_squared_error(scaled_df['peas'], peas_month3))
+        #print(rms3)
+        
+        potato_month6 = exp_potato.predict(month_current, month_current + 6)
+        rms4 = sqrt(mean_squared_error(scaled_df['potato'], potato_month6))
+        #print(rms4)
+        citrus_month6 = exp_citrus.predict(month_current, month_current + 6)
+        rms5 = sqrt(mean_squared_error(scaled_df['citrus'], citrus_month6))
+        #print(rms5)
+        peas_month6 = exp_peas.predict(month_current, month_current + 6)
+        rms6 = sqrt(mean_squared_error(scaled_df['peas'], peas_month6))
+        #print(rms6)
+        
+        
+        scaled_df['3 months potato'] = scaled_df.apply(potato_month3, axis=1)
+        scaled_df['3 months citrus'] = scaled_df.apply(citrus_month3, axis=1)
+        scaled_df['3 months peas'] = scaled_df.apply(peas_month3, axis=1)
+        scaled_df['6 months potato'] = scaled_df.apply(potato_month6, axis=1)
+        scaled_df['6 months citrus'] = scaled_df.apply(citrus_month6, axis=1)
+        scaled_df['6 months peas'] = scaled_df.apply(peas_month6, axis=1)
+######################################################################################################
+
+
 
         # Take output of predict_crop_feasibility and insert into each row depending on weather valueus
         # Do for each model, only change is parrams beingg paasseend
@@ -295,3 +365,4 @@ print(runprediction.forecast_prediction(weather_filtered, weather_keys))
 
 # genseries = GenerateSeries()
 # genseries.gen_prediction()
+
