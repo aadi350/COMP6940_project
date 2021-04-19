@@ -13,6 +13,13 @@ def hello():
 #   temp_ref.set(data)
     return render_template('home.html')
 
+@app.route('/home')
+def test():
+#   temp_ref = db.reference('test')
+#   temp_ref.set(data)
+    # return render_template('home.html')
+    return {"message":"Working"}
+
 
 @app.route('/form')
 def dropdown():
