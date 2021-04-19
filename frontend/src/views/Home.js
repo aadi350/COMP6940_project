@@ -89,7 +89,15 @@ const useStyles = makeStyles((theme) => ({
     },
     text: {
         color: 'black',
-        fontWeight: 500
+        fontWeight: 500,
+        fontSize:24,
+        fontFamily: 'monospace'
+    },
+    list: {
+        color: '#4B9C71',
+        fontWeight: 600,
+        fontSize:18,
+        fontFamily: 'monospace'
     }
 }));
 
@@ -165,10 +173,10 @@ export default function MiniDrawer() {
                 <List>
                     {['Home', 'Predictions', 'Forecasts', 'Archive'].map((text, index) => (
                         <ListItem button key={text}>
-                            <ListItemIcon>
+                            <ListItemIcon style={{color:'#4B9C71'}}>
                                 {getMenuIcon(text)}
                             </ListItemIcon>
-                            <ListItemText primary={text} />
+                            <ListItemText primary={text} classes={{primary: classes.list}}/>
                         </ListItem>
                     ))}
                 </List>
