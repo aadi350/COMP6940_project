@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
@@ -15,16 +16,20 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import {Home, NaturePeople, WbSunny, History} from '@material-ui/icons';
+import { Home, NaturePeople, WbSunny, History, Logout } from '@material-ui/icons';
+import Dashboard from './Dashboard.js';
+import Predict from './Predictions.js';
+import Forecast from './Forecast';
+import Archive from './Archive';
 
-const drawerWidth = 240;
+const drawerWidth = 220;
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        display: 'flex',        
-        backgroundColor:'#FAFAFA',
-        width:'100vw',
-        height:'100vh'
+        display: 'flex',
+        backgroundColor: '#FAFAFA',
+        width: '100vw',
+        height: '100vh'
     },
     appBar: {
         backgroundImage: `url('/agri2.jpg')`,
@@ -79,25 +84,36 @@ const useStyles = makeStyles((theme) => ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-end',
-        padding: theme.spacing(0, 1),
+        padding: theme.spacing(0, 0),
         // necessary for content to be below app bar
         ...theme.mixins.toolbar,
     },
     content: {
         flexGrow: 1,
-        padding: theme.spacing(3),
+        padding: theme.spacing(0, 3),
     },
     text: {
         color: 'black',
         fontWeight: 500,
-        fontSize:24,
+        fontSize: 22,
         fontFamily: 'monospace'
     },
     list: {
-        color: '#4B9C71',
+        color: '#17653C',
         fontWeight: 600,
-        fontSize:18,
+        fontSize: 18,
         fontFamily: 'monospace'
+    },
+    listItem: {
+        '&.Mui-selected': {
+            backgroundColor: '#FCA83D',
+        },
+        '&.Mui-selected:hover': {
+            backgroundColor: '#FCA83D',
+        },
+        '&:hover': {
+            backgroundColor: '#FFEDD7',
+        },
     }
 }));
 
@@ -105,6 +121,7 @@ export default function MiniDrawer() {
     const classes = useStyles();
     const theme = useTheme();
     const [open, setOpen] = React.useState(false);
+    const [selectedIndex, setSelectedIndex] = React.useState(0);
 
     const handleDrawerOpen = () => {
         setOpen(true);
@@ -114,16 +131,29 @@ export default function MiniDrawer() {
         setOpen(false);
     };
 
+    const handleListItemClick = (event, index) => {
+        setSelectedIndex(index);
+    };
+
     const getMenuIcon = (text) => {
         switch (text) {
-            case "Home": return <Home/>;               
-            case "Predictions": return <NaturePeople/>;
-            case "Forecasts": return <WbSunny/>;
-            case "Archive": return <History/>;
+            case "Home": return <Home />;
+            case "Predictions": return <NaturePeople />;
+            case "Forecasts": return <WbSunny />;
+            case "Archive": return <History />;
             default: break;
         }
     }
 
+    const getComponent = () => {
+        switch (selectedIndex) {
+            case 0: return <Dashboard />;
+            case 1: return <Predict />;
+            case 2: return <Forecast />;
+            case 3: return <Archive />;
+            default: break;
+        }
+    }
 
     return (
         <div className={classes.root}>
@@ -134,7 +164,7 @@ export default function MiniDrawer() {
                     [classes.appBarShift]: open,
                 })}
             >
-                <Toolbar>
+                <Toolbar style={{ width: '100%' }}>
                     <IconButton
                         color="inherit"
                         aria-label="open drawer"
@@ -146,9 +176,12 @@ export default function MiniDrawer() {
                     >
                         <MenuIcon color={"action"} />
                     </IconButton>
-                    <Typography variant="h6" noWrap component="div" className={classes.text}>
+                    <Typography variant="h6" noWrap className={classes.text} component="div" sx={{ flexGrow: 1 }}>
                         Online Crop Recommendation
-          </Typography>
+                    </Typography>
+                    <Link to="/" style={{ textDecoration: 'none' }}>
+                        <IconButton color="black"><Logout /></IconButton>
+                    </Link>
                 </Toolbar>
             </AppBar>
             <Drawer
@@ -172,17 +205,24 @@ export default function MiniDrawer() {
                 <Divider />
                 <List>
                     {['Home', 'Predictions', 'Forecasts', 'Archive'].map((text, index) => (
-                        <ListItem button key={text}>
-                            <ListItemIcon style={{color:'#4B9C71'}}>
+                        <ListItem
+                            button
+                            key={text}
+                            selected={selectedIndex === index}
+                            onClick={(event) => handleListItemClick(event, index)}
+                            className={classes.listItem}
+                        >
+                            <ListItemIcon style={{ color: '#17653C' }}>
                                 {getMenuIcon(text)}
                             </ListItemIcon>
-                            <ListItemText primary={text} classes={{primary: classes.list}}/>
+                            <ListItemText primary={text} classes={{ primary: classes.list }} />
                         </ListItem>
                     ))}
                 </List>
             </Drawer>
             <main className={classes.content}>
                 <div className={classes.toolbar} />
+                {getComponent()}
             </main>
         </div>
     );
