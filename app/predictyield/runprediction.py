@@ -203,9 +203,7 @@ class RunPrediction:
 
     def forecast_prediction(self, weather_filtered, weather_keys):
         '''
-            # TODO: Take scaled data and calculate optimal values for each crop using three different models, returning 
-            optimal crops for the past 6 months, generate 3-month and 6-month optimal forecast using this data for each of the 
-            regression models (bayesian, linear, etc)
+            # TODO: Adjust data-time to give valid look forward prediction
         '''
         scaled_data = self.scale_weather_data(weather_filtered)
         index = [i for i in range(len(scaled_data[weather_keys[0]]))]
@@ -223,6 +221,7 @@ class RunPrediction:
                 weather_keys[6]: np.transpose(scaled_data[weather_keys[6]])[0][-shortest_val:],
                 weather_keys[7]: np.transpose(scaled_data[weather_keys[7]])[0][-shortest_val:],
                 weather_keys[8]: np.transpose(scaled_data[weather_keys[8]])[0][-shortest_val:],
+                # following columns not being used
                 'peas': [-1]*shortest_val, 
                 'citrus': [-1]*shortest_val, 
                 'potato': [-1]*shortest_val, 
@@ -258,49 +257,44 @@ class RunPrediction:
                                              'peas_ridge']].idxmax(axis=1).replace('_ridge', '')
         
         
-        
-        
-        exp_potato = SimpleExpSmoothing(np.asarray(scaled_df['potato'])).fit(smoothing_level=0.1,optimized=False)
-        exp_citrus = SimpleExpSmoothing(np.asarray(scaled_df['citrus'])).fit(smoothing_level=0.1,optimized=False)
-        exp_peas = SimpleExpSmoothing(np.asarray(scaled_df['peas'])).fit(smoothing_level=0.1,optimized=False)
-        
-        #month_current = int(date.today().strftime('%m'))
+        ## Everything up to here looks fine
+        exp_potato = SimpleExpSmoothing(np.asarray(scaled_df['potato_pymc3'])).fit(smoothing_level=0.1,optimized=False)
+        exp_citrus = SimpleExpSmoothing(np.asarray(scaled_df['citrus_pymc3'])).fit(smoothing_level=0.1,optimized=False)
+        exp_peas = SimpleExpSmoothing(np.asarray(scaled_df['peas_pymc3'])).fit(smoothing_level=0.1,optimized=False)
+
+        month_current = int(date.today().strftime('%m'))
 
         potato_month3 = exp_potato.predict(month_current, month_current + 3)
-        rms1 = sqrt(mean_squared_error(scaled_df['potato'], potato_month3))
-        #print(rms1)
+
+
+        rms1 = sqrt(mean_squared_error(scaled_df['potato_pymc3'][:4], potato_month3))
+        print(rms1)
         citrus_month3 = exp_citrus.predict(month_current, month_current + 3)
-        rms2 = sqrt(mean_squared_error(scaled_df['citrus'], citrus_month3))
-        #print(rms2)
+        rms2 = sqrt(mean_squared_error(scaled_df['citrus_pymc3'][:4], citrus_month3))
+        print(rms2)
         peas_month3 = exp_peas.predict(month_current, month_current + 3)
-        rms3 = sqrt(mean_squared_error(scaled_df['peas'], peas_month3))
-        #print(rms3)
+        rms3 = sqrt(mean_squared_error(scaled_df['peas_pymc3'][:4], peas_month3))
+        print(rms3)
         
         potato_month6 = exp_potato.predict(month_current, month_current + 6)
-        rms4 = sqrt(mean_squared_error(scaled_df['potato'], potato_month6))
-        #print(rms4)
+        # rms4 = sqrt(mean_squared_error(scaled_df['potato_pymc3'], potato_month6))
+        # print(rms4)
         citrus_month6 = exp_citrus.predict(month_current, month_current + 6)
-        rms5 = sqrt(mean_squared_error(scaled_df['citrus'], citrus_month6))
-        #print(rms5)
+        # rms5 = sqrt(mean_squared_error(scaled_df['citrus_pymc3'], citrus_month6))
+        # print(rms5)
         peas_month6 = exp_peas.predict(month_current, month_current + 6)
-        rms6 = sqrt(mean_squared_error(scaled_df['peas'], peas_month6))
-        #print(rms6)
+        # rms6 = sqrt(mean_squared_error(scaled_df['peas_pymc3'], peas_month6))
+        # print(rms6)
         
         
-        scaled_df['3 months potato'] = scaled_df.apply(potato_month3, axis=1)
-        scaled_df['3 months citrus'] = scaled_df.apply(citrus_month3, axis=1)
-        scaled_df['3 months peas'] = scaled_df.apply(peas_month3, axis=1)
-        scaled_df['6 months potato'] = scaled_df.apply(potato_month6, axis=1)
-        scaled_df['6 months citrus'] = scaled_df.apply(citrus_month6, axis=1)
-        scaled_df['6 months peas'] = scaled_df.apply(peas_month6, axis=1)
-######################################################################################################
+        scaled_df['3 months potato'] = potato_month3.mean()
+        scaled_df['3 months citrus'] = citrus_month3.mean()
+        scaled_df['3 months peas'] = peas_month3.mean()
+        scaled_df['6 months potato'] = potato_month6.mean()
+        scaled_df['6 months citrus'] = citrus_month6.mean()
+        scaled_df['6 months peas'] = peas_month6.mean()
 
-
-
-        # Take output of predict_crop_feasibility and insert into each row depending on weather valueus
-        # Do for each model, only change is parrams beingg paasseend
-        # single-function call to do exponential forecasting on peas, citrus and potato columns for 3 and 6 months
-
+        # print(scaled_df[['3 months potato','3 months citrus', '3 months peas','6 months potato', '6 months citrus', '6 months peas'  ]])
 
         return scaled_df
 
