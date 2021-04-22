@@ -180,7 +180,7 @@ export default function MiniDrawer() {
                         Online Crop Recommendation
                     </Typography>
                     <Link to="/" style={{ textDecoration: 'none' }}>
-                        <IconButton color="black"><Logout /></IconButton>
+                        <IconButton color="primary"><Logout /></IconButton>
                     </Link>
                 </Toolbar>
             </AppBar>

@@ -49,7 +49,7 @@ export default function Welcome() {
     return (
         <Box display='flex' alignItems='center' className={classes.root}>
             <Grid container spacing={0} alignContent='center' direction='column'>
-                <Card className={classes.card} variant='outlined' raised>
+                <Card className={classes.card} variant='outlined'>
                     <CardHeader
                         classes={{ title: classes.title, subheader: classes.subheader }}
                         title="Online Crop Recommendation System"
