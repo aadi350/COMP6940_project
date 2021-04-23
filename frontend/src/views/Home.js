@@ -21,6 +21,7 @@ import Dashboard from './Dashboard.js';
 import Predict from './Predictions.js';
 import Forecast from './Forecast';
 import Archive from './Archive';
+import io from "socket.io-client";
 
 const drawerWidth = 220;
 
@@ -117,7 +118,8 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export default function MiniDrawer() {
+export default function Homepage() {
+    const socket = io();
     const classes = useStyles();
     const theme = useTheme();
     const [open, setOpen] = React.useState(false);
@@ -148,8 +150,8 @@ export default function MiniDrawer() {
     const getComponent = () => {
         switch (selectedIndex) {
             case 0: return <Dashboard />;
-            case 1: return <Predict />;
-            case 2: return <Forecast />;
+            case 1: return <Predict socket={socket}/>;
+            case 2: return <Forecast socket={socket}/>;
             case 3: return <Archive />;
             default: break;
         }
