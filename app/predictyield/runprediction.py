@@ -6,19 +6,21 @@ from firebase_admin import credentials, firestore, initialize_app, db
 from flask import Flask, request, jsonify
 import numpy as np
 from numpy import *
-from soilparams import soil_params
-from modelparams import pymc3_params, lr_params, ridge_params
+from predictyield.soilparams import soil_params
+from predictyield.modelparams import pymc3_params, lr_params, ridge_params
 import pickle
 #################################################################
 from statsmodels.tsa.holtwinters import SimpleExpSmoothing
 from sklearn.metrics import mean_squared_error   
 #################################################################
 from datetime import date
+import os
 
-cred = credentials.Certificate('../private/crop-jedi-storage-firebase-adminsdk-scef3-882ee18ae0.json')
-app = firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://crop-jedi-storage-default-rtdb.firebaseio.com/'
-})
+# data = os.path.abspath(os.path.dirname(__file__)) + "\..\private\crop-jedi-storage-firebase-adminsdk-scef3-882ee18ae0.json"
+# cred = credentials.Certificate(data)
+# app = firebase_admin.initialize_app(cred, {
+#     'databaseURL': 'https://crop-jedi-storage-default-rtdb.firebaseio.com/'
+# })
 
 class OrganiseData:
     '''
@@ -313,15 +315,15 @@ class RunPrediction:
 
     def load_scalers(self):
         scalers = dict()
-        scalers['humidity_mean'] = pickle.load(open('scalers/humidity_mean_scaler.pkl', 'rb'))
-        scalers['humidity_var'] = pickle.load(open('scalers/humidity_var_scaler.pkl', 'rb'))
-        scalers['pressure_mean'] = pickle.load(open('scalers/pressure_mean_scaler.pkl', 'rb'))
-        scalers['pressure_var'] = pickle.load(open('scalers/pressure_var_scaler.pkl', 'rb'))
-        scalers['rain_mean'] = pickle.load(open('scalers/rain_mean_scaler.pkl', 'rb'))
-        scalers['rain_var'] = pickle.load(open('scalers/rain_var_scaler.pkl', 'rb'))
-        scalers['temp'] = pickle.load(open('scalers/temp_scaler.pkl', 'rb'))
-        scalers['temp_max'] = pickle.load(open('scalers/temp_max_scaler.pkl', 'rb'))
-        scalers['temp_min'] = pickle.load(open('scalers/temp_min_scaler.pkl', 'rb'))
+        scalers['humidity_mean'] = pickle.load(open(os.path.abspath(os.path.dirname(__file__)) + '/scalers/humidity_mean_scaler.pkl', 'rb'))
+        scalers['humidity_var'] = pickle.load(open(os.path.abspath(os.path.dirname(__file__)) + '/scalers/humidity_var_scaler.pkl', 'rb'))
+        scalers['pressure_mean'] = pickle.load(open(os.path.abspath(os.path.dirname(__file__)) + '/scalers/pressure_mean_scaler.pkl', 'rb'))
+        scalers['pressure_var'] = pickle.load(open(os.path.abspath(os.path.dirname(__file__)) + '/scalers/pressure_var_scaler.pkl', 'rb'))
+        scalers['rain_mean'] = pickle.load(open(os.path.abspath(os.path.dirname(__file__)) + '/scalers/rain_mean_scaler.pkl', 'rb'))
+        scalers['rain_var'] = pickle.load(open(os.path.abspath(os.path.dirname(__file__)) + '/scalers/rain_var_scaler.pkl', 'rb'))
+        scalers['temp'] = pickle.load(open(os.path.abspath(os.path.dirname(__file__)) + '/scalers/temp_scaler.pkl', 'rb'))
+        scalers['temp_max'] = pickle.load(open(os.path.abspath(os.path.dirname(__file__)) + '/scalers/temp_max_scaler.pkl', 'rb'))
+        scalers['temp_min'] = pickle.load(open(os.path.abspath(os.path.dirname(__file__)) + '/scalers/temp_min_scaler.pkl', 'rb'))
         return scalers
 
     def _choose_crop(self, weather_data, crop):
@@ -355,7 +357,7 @@ weather_data = organisedata.get_weather()
 weather_filtered, weather_keys = organisedata.filter_weather(weather_data)
 
 runprediction = RunPrediction()
-print(runprediction.forecast_prediction(weather_filtered, weather_keys))
+# print(runprediction.forecast_prediction(weather_filtered, weather_keys))
 
 # genseries = GenerateSeries()
 # genseries.gen_prediction()
