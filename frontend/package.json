@@ -19,7 +19,7 @@
     "web-vitals": "^1.1.1"
   },
   "scripts": {
-    "start": "concurrently --kill-others-on-fail \"react-scripts start\"",
+    "start": "concurrently --kill-others-on-fail \"react-scripts start\" \"cd ../app && flask run --no-debugger\"",
     "start-react": "react-scripts start",
     "start-api": "cd ../app && flask run --no-debugger",
     "install:clean": "rm -rf node_modules/ && rm -rf package-lock.json && npm install && npm start",
