@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "G1 Crop App",
+  "name": "Group G1 crops recommendation system",
   "icons": [
     {
       "src": "favicon.ico",
