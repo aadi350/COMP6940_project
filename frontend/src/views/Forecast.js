@@ -1,34 +1,78 @@
 import React from 'react';
 import MUIDataTable from "mui-datatables";
+import Button from '@material-ui/core/Button';
+import { makeStyles } from '@material-ui/core/styles';
+import Chart from "react-google-charts";
 
-export default function Forecast({ socket }) {
+const useStyles = makeStyles({
+    button: {
+        backgroundColor: '#E75757',
+        color: 'black',
+        fontFamily: 'monospace',
+        fontSize: 14,
+        fontWeight: 400,
+        textTransform: 'none'
+    }
+});
 
-    const [weatherFiltered, setWeatherFiltered] = React.useState(0);
-    const [weatherKeys, setWeatherKeys] = React.useState(0);
+export default function Forecast({ fData, fCols, setfCols, setfData }) {
+    const classes = useStyles();
+    const wData = React.useRef(fData);
+    const wColumns = React.useRef(fCols);
+    const [data, setData] = React.useState(wData.current);
+    const [columns, setColumns] = React.useState(wColumns.current);
 
-    const columns = ["Name", "Company", "City", "State"];
-
-    const data = [
-        ["Joe James", "Test Corp", "Yonkers", "NY"],
-        ["John Walsh", "Test Corp", "Hartford", "CT"],
-        ["Bob Herm", "Test Corp", "Tampa", "FL"],
-        ["James Houston", "Test Corp", "Dallas", "TX"],
-    ];
+    React.useEffect(() => {
+        return () => {
+            setfCols(wColumns.current);
+            setfData(wData.current);
+        }
+    }, [setfData, setfCols, wData, wColumns]);
 
     const options = {
         filterType: 'checkbox',
-        elevation:'0'
+        elevation: 0,
+        filter: false,
+        selectableRows: 'none',
+        download: false,
+        print: false,
     };
 
-    socket.emit('getData', (filtered, keys) => {
-        console.log();
-    });
+    const getData = () => {
+
+        fetch('/main/forecast').then(res => res.json()).then(data => {
+            console.log(data.columns);
+            console.log(data.data);
+            wData.current = data.data;
+            wColumns.current = data.columns;
+            setData(wData.current);
+            setColumns(wColumns.current);
+        });
+    }
 
     return (
         <div>
-            <h3>Forecast</h3>            
+            <h2>Forecast</h2>
+            {/* <Chart
+                width={'1000px'}
+                height={'500px'}
+                chartType="LineChart"
+                loader={<div>Loading Chart</div>}
+                data={[].concat([columns])}
+                options={{
+                    hAxis: {
+                        title: 'Week',
+                    },
+                    vAxis: {
+                        title: 'Forecast',
+                    },
+                }}
+                rootProps={{ 'data-testid': '1' }}
+            /> */}
             <MUIDataTable
-                title={"Employee List"}
+                title={
+                    <Button variant="contained" className={classes.button} onClick={getData}>Get Forecast</Button>
+                }
                 data={data}
                 columns={columns}
                 options={options}

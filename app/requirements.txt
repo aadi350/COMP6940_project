@@ -19,7 +19,6 @@ docopt==0.6.2
 entrypoints==0.3
 firebase-admin==4.5.3
 Flask==1.1.2
-flask-socketio==5.0.1
 gitdb==4.0.6
 GitPython==3.1.14
 google-api-core==1.26.2

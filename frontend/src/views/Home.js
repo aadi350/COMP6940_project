@@ -16,19 +16,18 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import { Home, NaturePeople, WbSunny, History, Logout } from '@material-ui/icons';
+import { Home, NaturePeople, WbSunny, History, ExitToApp } from '@material-ui/icons';
 import Dashboard from './Dashboard.js';
 import Predict from './Predictions.js';
 import Forecast from './Forecast';
 import Archive from './Archive';
-import io from "socket.io-client";
 
 const drawerWidth = 220;
 
 const useStyles = makeStyles((theme) => ({
     root: {
         display: 'flex',
-        // backgroundColor: '#FAFAFA',
+        backgroundColor: '#FFFFFF',
         width: '100vw',
         height: '100vh'
     },
@@ -59,10 +58,10 @@ const useStyles = makeStyles((theme) => ({
         width: drawerWidth,
         flexShrink: 0,
         whiteSpace: 'nowrap',
-        boxSizing: 'border-box',
     },
     drawerOpen: {
         backgroundImage: `url('/agri2.jpg')`,
+        backgroundSize: 'cover',
         width: drawerWidth,
         transition: theme.transitions.create('width', {
             easing: theme.transitions.easing.sharp,
@@ -71,14 +70,15 @@ const useStyles = makeStyles((theme) => ({
     },
     drawerClose: {
         backgroundImage: `url('/agri2.jpg')`,
+        backgroundSize: 'cover',
         transition: theme.transitions.create('width', {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
         }),
         overflowX: 'hidden',
-        width: `calc(${theme.spacing(7)} + 1px)`,
+        width: theme.spacing(7) + 1,
         [theme.breakpoints.up('sm')]: {
-            width: `calc(${theme.spacing(9)} + 1px)`,
+            width: theme.spacing(9) + 1,
         },
     },
     toolbar: {
@@ -119,11 +119,14 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function Homepage() {
-    const socket = io();
     const classes = useStyles();
     const theme = useTheme();
     const [open, setOpen] = React.useState(false);
     const [selectedIndex, setSelectedIndex] = React.useState(0);
+    const [pData, setpData] = React.useState([]);
+    const [pCols, setCols] = React.useState([]);
+    const [fData, setfData] = React.useState([]);
+    const [fCols, setfCols] = React.useState([]);
 
     const handleDrawerOpen = () => {
         setOpen(true);
@@ -139,7 +142,7 @@ export default function Homepage() {
 
     const getMenuIcon = (text) => {
         switch (text) {
-            case "Home": return <Home />;
+            // case "Home": return <Home />;
             case "Predictions": return <NaturePeople />;
             case "Forecasts": return <WbSunny />;
             case "Archive": return <History />;
@@ -149,10 +152,10 @@ export default function Homepage() {
 
     const getComponent = () => {
         switch (selectedIndex) {
-            case 0: return <Dashboard />;
-            case 1: return <Predict socket={socket}/>;
-            case 2: return <Forecast socket={socket}/>;
-            case 3: return <Archive />;
+            // case 0: return <Dashboard />;
+            case 0: return <Predict pData={pData} pCols={pCols} setpData={setpData} setCols={setCols}/>;
+            case 1: return <Forecast fData={fData} fCols={fCols} setfData={setfData} setfCols={setfCols}/>;
+            case 2: return <Archive />;
             default: break;
         }
     }
@@ -182,7 +185,7 @@ export default function Homepage() {
                         Online Crop Recommendation
                     </Typography>
                     <Link to="/" style={{ textDecoration: 'none' }}>
-                        <IconButton color="primary"><Logout /></IconButton>
+                        <IconButton color="primary"><ExitToApp /></IconButton>
                     </Link>
                 </Toolbar>
             </AppBar>
@@ -206,7 +209,7 @@ export default function Homepage() {
                 </div>
                 <Divider />
                 <List>
-                    {['Home', 'Predictions', 'Forecasts', 'Archive'].map((text, index) => (
+                    {['Predictions', 'Forecasts', 'Archive'].map((text, index) => (
                         <ListItem
                             button
                             key={text}

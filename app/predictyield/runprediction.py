@@ -270,13 +270,13 @@ class RunPrediction:
 
 
         rms1 = sqrt(mean_squared_error(scaled_df['potato_pymc3'][:4], potato_month3))
-        print(rms1)
+        # print(rms1)
         citrus_month3 = exp_citrus.predict(month_current, month_current + 3)
         rms2 = sqrt(mean_squared_error(scaled_df['citrus_pymc3'][:4], citrus_month3))
-        print(rms2)
+        # print(rms2)
         peas_month3 = exp_peas.predict(month_current, month_current + 3)
         rms3 = sqrt(mean_squared_error(scaled_df['peas_pymc3'][:4], peas_month3))
-        print(rms3)
+        # print(rms3)
         
         potato_month6 = exp_potato.predict(month_current, month_current + 6)
         # rms4 = sqrt(mean_squared_error(scaled_df['potato_pymc3'], potato_month6))
@@ -357,7 +357,7 @@ weather_data = organisedata.get_weather()
 weather_filtered, weather_keys = organisedata.filter_weather(weather_data)
 
 runprediction = RunPrediction()
-# print(runprediction.forecast_prediction(weather_filtered, weather_keys))
+runprediction.forecast_prediction(weather_filtered, weather_keys)
 
 # genseries = GenerateSeries()
 # genseries.gen_prediction()
